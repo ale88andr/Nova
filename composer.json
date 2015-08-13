@@ -1,0 +1,12 @@
+{
+    "name": "tol/nova",
+    "authors": [
+        {
+            "name": "Alexandr Nekrasov",
+            "email": "ale88andr@gmail.com"
+        }
+    ],
+    "require": {
+        "symfony/yaml": "~2.7"
+    }
+}
