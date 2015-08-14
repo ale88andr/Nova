@@ -57,6 +57,11 @@ class Hash
         return $array[0];
     }
 
+    public static function last($array)
+    {
+        return array_pop($array);
+    }
+
     public static function keyExists($array, $key)
     {
         if(!is_array($array) || empty($array)){

@@ -1,0 +1,15 @@
+production:
+  driver  : ''
+  host    : ''
+  port    : 27001
+  database: ''
+  user    : ''
+  password: ''
+
+development:
+  driver  : 'mysql'
+  host    : 'localhost'
+  port    : 27001
+  database: 'nova'
+  user    : 'root'
+  password: ''

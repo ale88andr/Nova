@@ -8,5 +8,5 @@ Application::initialize();
 $app = new UsersController();
 $app->index();
 
-$env = new Nova\Core\Env();
-var_dump($env->get('defaults.environment'));
+//$env = new Nova\Core\Env();
+//var_dump($env->get('defaults.environment'));
