@@ -22,9 +22,9 @@ class Application {
         try {
             $resource = null;
             foreach($resourcesPath as $path){
-                if (file_exists($path)){
+                if (is_readable($path)){
                     $resource = $path;
-                    break;
+                    var_dump($path);
                 }
             }
 
@@ -32,9 +32,9 @@ class Application {
                 require_once $resource;
             else
                 throw new Exception('File ' . $fileName . ' not exists<br>Search path:<br>' . implode('<br>', $resourcesPath));
-            var_dump($resource);
+
         } catch (Exception $e) {
-            $e->getMessage();
+            die($e->getMessage());
         }
     }
 
