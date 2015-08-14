@@ -2,55 +2,28 @@
 
 namespace Nova\Core\Exceptions\LogicExceptions;
 
-use \Exception;
-use Nova\Interfaces\ExceptionInterface;
+use Nova\Core\Exceptions\NovaException;
+use Nova\Helpers\Html;
 use Nova\Helpers\Hash;
+use Nova\Interfaces\ExceptionInterface;
 
-class ArgumentError extends Exception implements ExceptionInterface {
 
-    private $fullCallerName;
+class ArgumentError extends NovaException implements ExceptionInterface {
 
-    private $controllerWhoCall;
-    private $controllerCallLine;
-    private $methodWhoCall;
-    private $calledFromClass;
-    private $calledWithArgs;
+    protected $exception;
 
-    public function __construct($code =0, Exception $previous = null)
+    public function __construct($code = 0, Exception $previous = null)
     {
-        parent::__construct($this->setMessage(), $code, $previous);
-
-        $callers = Hash::get($this->getTrace(), 0);
-        $caller  = Hash::get($this->getTrace(), 1);
-        $this->fullCallerName = Hash::get($caller, 'class') .
-                                Hash::get($caller, 'type') .
-                                Hash::get($caller, 'function') .
-                                '() with arguments' .
-                                implode(', ', Hash::get($caller, 'args'));
-        $this->controllerWhoCall    = Hash::get($caller,  'class');
-        $this->controllerCallLine   = Hash::get($callers, 'line');
-        $this->methodWhoCall        = Hash::get($callers, 'function');
-        $this->calledFromClass      = Hash::get($callers, 'class');
-        $this->calledWithArgs       = Hash::get($callers, 'args')[0];
-    }
-
-    public function setMessage()
-    {
-        $header  = __CLASS__ . 'at ' . Hash::get($_SERVER, 'REQUEST_URI');
-        $message = '"' . $this->calledWithArgs . '" not a valid argument for "' . $this->methodWhoCall . '"';
-        $debug   =
-//        return $traceMessage;
+        $this->exception = Hash::last(explode('\\', __CLASS__));
+        parent::__construct($code, $previous);
     }
 
     public function printTrace()
     {
-        print_r("<pre>");
-        print_r($this->getTrace());
+        $header  = Html::tag('div', $this->exception . ' at ' . Hash::get($_SERVER, 'REQUEST_URI'), ['class' => 'head message']);
+        $message = Html::tag('h2', "'{$this->calledWithArgs}' not a valid argument for '{$this->methodWhoCall}'", ['class' => 'message']);
+        $debug   = Html::tag('div', $this->fullCallerString, ['class' => 'debug']);
+        echo Html::tag('div', $header . $message . $debug, ['class' => 'exception']);
     }
-
-//echo "Message: " . $e->getMessage(). "\n\n";
-//echo "File: " . $e->getFile(). "\n\n";
-//echo "Line: " . $e->getLine(). "\n\n";
-//echo "Trace: \n" . $e->getTraceAsString(). "\n\n";
 
 } 

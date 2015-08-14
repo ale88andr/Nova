@@ -4,5 +4,5 @@ namespace Nova\Interfaces;
 
 interface ExceptionInterface
 {
-    public function setMessage();
+    public function printTrace();
 }
