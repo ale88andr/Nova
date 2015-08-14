@@ -1,6 +1,7 @@
 <?php
 
 class Application {
+
     public static function autoload($class)
     {
         $baseDir    = filter_input(INPUT_SERVER, 'DOCUMENT_ROOT') . DIRECTORY_SEPARATOR;
@@ -22,19 +23,17 @@ class Application {
         try {
             $resource = null;
             foreach($resourcesPath as $path){
-                if (file_exists($path)){
+                if (is_readable($path))
                     $resource = $path;
-                    break;
-                }
             }
 
             if ($resource)
                 require_once $resource;
             else
                 throw new Exception('File ' . $fileName . ' not exists<br>Search path:<br>' . implode('<br>', $resourcesPath));
-            var_dump($resource);
+
         } catch (Exception $e) {
-            $e->getMessage();
+            die($e->getMessage());
         }
     }
 
