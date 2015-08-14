@@ -1,6 +1,7 @@
 <?php
 
 class Application {
+
     public static function autoload($class)
     {
         $baseDir    = filter_input(INPUT_SERVER, 'DOCUMENT_ROOT') . DIRECTORY_SEPARATOR;
@@ -22,10 +23,8 @@ class Application {
         try {
             $resource = null;
             foreach($resourcesPath as $path){
-                if (is_readable($path)){
+                if (is_readable($path))
                     $resource = $path;
-                    var_dump($path);
-                }
             }
 
             if ($resource)
