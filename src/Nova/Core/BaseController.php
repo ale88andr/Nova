@@ -4,17 +4,33 @@ namespace Nova\Core;
 
 use Nova\Helpers\Hash;
 
+/**
+ * Class BaseController
+ * @package Nova\Core
+ */
 class BaseController {
 
+    /**
+     * create an instance of Viewer class
+     * @var Viewer
+     */
     protected $view;
 
-    private $params;
+    /**
+     * magic params from child controller
+     * @var
+     */
+    private $params = [];
 
     public function __construct()
     {
         $this->view = new Viewer();
     }
 
+    /**
+     * Render a template file or Controller/method file name
+     * @param string|null $partial
+     */
     protected function render($partial = null)
     {
         if (is_null($partial)){
@@ -22,21 +38,24 @@ class BaseController {
             $partial = strtolower($subDir) . DIRECTORY_SEPARATOR . $this->getCallingMethodName();
         }
 
-        $this->view->render($partial, $this->getParams());
+        $this->view->render($partial, $this->params);
     }
 
+    /**
+     * return method caller from backtrace
+     * @return string
+     */
     private function getCallingMethodName()
     {
         return Hash::get(debug_backtrace(), '2.function');
     }
 
+    /**
+     * @param $key
+     * @param $value
+     */
     public function __set($key, $value)
     {
         Hash::set($this->params, $key, $value);
-    }
-
-    public function getParams()
-    {
-        return empty($this->params) ? [] : $this->params ;
     }
 } 
