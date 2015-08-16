@@ -38,7 +38,7 @@ class BaseController {
             $partial = strtolower($subDir) . DIRECTORY_SEPARATOR . $this->getCallingMethodName();
         }
 
-        $this->view->render($partial, $this->params);
+        echo $this->view->render($partial, $this->params);
     }
 
     /**

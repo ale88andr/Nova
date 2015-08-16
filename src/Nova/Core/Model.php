@@ -3,6 +3,7 @@
 namespace Nova\Core;
 
 use Nova\Core\Exceptions\LogicExceptions\ArgumentError;
+use Nova\Helpers\Hash;
 use Nova\Interfaces\ModelInterface;
 
 abstract class Model implements ModelInterface
@@ -15,6 +16,8 @@ abstract class Model implements ModelInterface
      */
     protected static $table;
 
+    protected $columns = [];
+
     /**
      * A wrapper for Database::query().
      *
@@ -25,7 +28,7 @@ abstract class Model implements ModelInterface
      */
     private static function sendPdoQuery($sql, $values = [], $write = false)
     {
-        $dbh = DatabaseWrapper::getConnection()->query($sql, $values);
+        $dbh = DatabaseWrapper::getConnection()->query($sql, $values, $write);
         if ($write)
             return $dbh->getRowsCount();
         else
@@ -94,7 +97,7 @@ abstract class Model implements ModelInterface
         try {
             if (is_integer($id)) {
                 $sql = 'SELECT ' . self::setFields($fields) . ' FROM ' . static::$table . ' WHERE id = ?';
-                return static::sendPdoQuery($sql, [$id]);
+                return static::sendPdoQuery($sql, [$id])[0];
             }
             else {
                 throw new ArgumentError();
@@ -124,23 +127,23 @@ abstract class Model implements ModelInterface
      * @throws ArgumentError
      * @return int
      */
-    public static function insert($hashValues)
+    public function create()
     {
         try {
-            if(is_array($hashValues)){
-                $columns = array_keys($hashValues);
+            if(is_array($this->columns)){
+                $columns = array_keys($this->columns);
                 $values = '';
                 $i = 1;
-                foreach ($hashValues as $key => $value) {
+                foreach ($this->columns as $key => $value) {
                     $values .= ":{$key}";
-                    if($i < count($hashValues))
+                    if($i < count($this->columns))
                         $values .= ', ';
 
                     $i++;
                 }
 
                 $sql = 'INSERT INTO ' . static::$table . '(' . implode(', ', $columns) . ') VALUES (' . $values .')';
-                return static::sendPdoQuery($sql, $hashValues, true);
+                return static::sendPdoQuery($sql, $this->columns, true);
             } else {
                 throw new ArgumentError();
             }
@@ -159,16 +162,16 @@ abstract class Model implements ModelInterface
      * @throws ArgumentError
      * @return int
      */
-    public static function update($fields, $hashValues)
+    public function update()
     {
         try {
-            if(is_array($hashValues)){
-                $where = array_keys($fields);
+            if(is_array($this->columns)){
+                $where = Hash::extract($this->columns, 'id');
                 $values = '';
                 $i = 1;
-                foreach ($hashValues as $key => $value) {
+                foreach ($this->columns as $key => $value) {
                     $values .= "{$key} = :{$key}";
-                    if($i < count($hashValues))
+                    if($i < count($this->columns))
                         $values .= ', ';
 
                     $i++;
@@ -183,7 +186,7 @@ abstract class Model implements ModelInterface
                     }
                 }
 
-                return static::sendPdoQuery($sql, array_merge($hashValues, $fields), true);
+                return static::sendPdoQuery($sql, $this->columns, true);
             } else {
                 throw new ArgumentError();
             }
@@ -191,5 +194,20 @@ abstract class Model implements ModelInterface
             $e->printTrace();
         }
 
+    }
+
+    public function __set($key, $value)
+    {
+        Hash::set($this->columns, $key, $value);
+    }
+
+    public function __get($key)
+    {
+        return Hash::get($this->columns, $key);
+    }
+
+    public function __isset($key)
+    {
+        return Hash::keyExists($this->columns, $key);
     }
 } 

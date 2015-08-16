@@ -10,7 +10,7 @@ interface ModelInterface
 
     public static function findById($id, $fields);
 
-    public static function insert($hashValues);
+    public function create();
 
-    public static function update($fields, $hashValues);
+    public function update();
 }

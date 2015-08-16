@@ -34,7 +34,9 @@ class Viewer {
             $partialPath = $this->viewsPath . Hash::get($partialSubPath, 'dir') . DIRECTORY_SEPARATOR . Hash::get($partialSubPath, 'file');
 
             if (file_exists($partialPath)) {
+                ob_start();
                 require_once $partialPath;
+                return $content = ob_get_clean();
             } else {
                 throw new RequireFileException($partialPath);
             }
