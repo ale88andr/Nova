@@ -3,6 +3,7 @@
 namespace Nova\Core;
 
 use Nova\Core\Exceptions\LogicExceptions\ArgumentError;
+use Nova\Core\Exceptions\LogicExceptions\RequireFileException;
 use Nova\Helpers\Hash;
 
 class Viewer {
@@ -35,15 +36,13 @@ class Viewer {
             if (file_exists($partialPath)) {
                 require_once $partialPath;
             } else {
-//                throw new RequireFileException();
-                echo 'file not found' . $partialPath;
+                throw new RequireFileException($partialPath);
             }
         } catch (ArgumentError $e) {
             die($e->printTrace());
+        } catch (RequireFileException $e){
+            die($e->printTrace());
         }
-//        } catch (RequireFileException $e){
-//            die($e);
-//        }
     }
 
     private function getPartialPath($partial)
