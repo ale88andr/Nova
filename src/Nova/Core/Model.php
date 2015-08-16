@@ -16,6 +16,9 @@ abstract class Model implements ModelInterface
      */
     protected static $table;
 
+    /**
+     * @var array
+     */
     protected $columns = [];
 
     /**
@@ -28,7 +31,9 @@ abstract class Model implements ModelInterface
      */
     private static function sendPdoQuery($sql, $values = [], $write = false)
     {
-        $dbh = DatabaseWrapper::getConnection()->query($sql, $values, $write);
+        $dbh = DatabaseWrapper::getConnection();
+        $dbh->setCallerClassName(get_called_class());
+        $dbh->query($sql, $values, $write);
         if ($write)
             return $dbh->getRowsCount();
         else
@@ -121,7 +126,9 @@ abstract class Model implements ModelInterface
 
     /**
      * Insert row.
-     * Example: User::insert(['login' => $login])
+     * Example: $user = new User();
+     *          $user->login = 'user_login';
+     *          $user->create();
      *
      * @param array $hash_values  Inserted values [column => value, ...]
      * @throws ArgumentError
@@ -154,7 +161,11 @@ abstract class Model implements ModelInterface
     }
 
     /**
-     * Update row(s).
+     * Update row.
+     * Example: $user = User::findById(5);
+     *          $user->email = 'newmail@mail.com';
+     *          $user->update();
+     *
      * Example: User::update($id, ['login' => $login])
      *
      * @param string $constraint  SQL Where constraint
@@ -166,18 +177,21 @@ abstract class Model implements ModelInterface
     {
         try {
             if(is_array($this->columns)){
-                $where = Hash::extract($this->columns, 'id');
+//                $whereValue['id'] = Hash::remove($this->columns, 'id');
+                $where[] = 'id';
                 $values = '';
-                $i = 1;
+                $i = 0;
                 foreach ($this->columns as $key => $value) {
+                    $i++;
+                    if ('id' == $key){
+                        continue;
+                    }
                     $values .= "{$key} = :{$key}";
                     if($i < count($this->columns))
                         $values .= ', ';
-
-                    $i++;
                 }
 
-                $sql = 'UPDATE ' . static::$table . ' SET ' . $values . 'WHERE ';
+                $sql = 'UPDATE ' . static::$table . ' SET ' . $values . ' WHERE ';
                 foreach ($where as $index => $column) {
                     if($index > 0){
                         $sql .= " AND {$column} = :{$column}";
@@ -194,6 +208,15 @@ abstract class Model implements ModelInterface
             $e->printTrace();
         }
 
+    }
+
+    /**
+     * Model table name
+     * @return string
+     */
+    public function getCurrentTable()
+    {
+        return static::$table;
     }
 
     public function __set($key, $value)
