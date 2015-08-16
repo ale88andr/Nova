@@ -3,8 +3,9 @@
 namespace Nova\Core;
 
 use Nova\Core\Exceptions\LogicExceptions\ArgumentError;
+use Nova\Interfaces\ModelInterface;
 
-abstract class Model
+abstract class Model implements ModelInterface
 {
 
     /**
@@ -92,7 +93,7 @@ abstract class Model
     {
         try {
             if (is_integer($id)) {
-                $sql = 'SELECT ' . self::setFields($fields) . ' FROM ' . static::table . ' WHERE id = ?';
+                $sql = 'SELECT ' . self::setFields($fields) . ' FROM ' . static::$table . ' WHERE id = ?';
                 return static::sendPdoQuery($sql, [$id]);
             }
             else {

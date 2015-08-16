@@ -1,11 +1,10 @@
 <?php
 
-class UsersController
+class UsersController extends ApplicationController
 {
-
     public function index()
     {
-        $users = User::find('blah');
-        include __DIR__ . '/../views/users/index.html.php';
+        $this->users = User::findById(1);
+        $this->render();
     }
-} 
+}
