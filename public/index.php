@@ -6,7 +6,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 Application::initialize();
 
 $app = new UsersController();
-$app->index();
+$app->update();
 
 //$env = new Nova\Core\Env();
 //var_dump($env->get('defaults.environment'));

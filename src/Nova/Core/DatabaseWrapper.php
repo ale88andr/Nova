@@ -27,6 +27,8 @@ class DatabaseWrapper
 
     private $dbConnectionHash;
 
+    private $calledClassName = 'stdClass';
+
     private function __construct()
     {
         $dbConnectionFile = filter_input(INPUT_SERVER, 'DOCUMENT_ROOT') . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'database.yml';
@@ -111,7 +113,7 @@ class DatabaseWrapper
             try {
                 $this->query->execute();
                 if (!$write) {
-                    $this->results = $this->query->fetchAll(PDO::FETCH_OBJ);
+                    $this->results = $this->query->fetchAll(PDO::FETCH_CLASS, $this->calledClassName);
                 }
 
                 $this->count = $this->query->rowCount();
@@ -167,5 +169,10 @@ class DatabaseWrapper
     public function getRowsCount()
     {
         return $this->count;
+    }
+
+    public function setCallerClassName($className)
+    {
+        $this->calledClassName = $className;
     }
 } 
