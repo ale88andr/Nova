@@ -177,7 +177,6 @@ abstract class Model implements ModelInterface
     {
         try {
             if(is_array($this->columns)){
-//                $whereValue['id'] = Hash::remove($this->columns, 'id');
                 $where[] = 'id';
                 $values = '';
                 $i = 0;
@@ -208,6 +207,19 @@ abstract class Model implements ModelInterface
             $e->printTrace();
         }
 
+    }
+
+    /**
+     * Create or update object
+     * @return int count of inserted/updated rows
+     */
+    public function save()
+    {
+        if (isset($this->id)) {
+            $this->update();
+        } else {
+            $this->create();
+        }
     }
 
     /**
