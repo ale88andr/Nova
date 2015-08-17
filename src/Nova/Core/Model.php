@@ -3,6 +3,7 @@
 namespace Nova\Core;
 
 use Nova\Core\Exceptions\LogicExceptions\ArgumentError;
+use Nova\Helpers\Hash;
 use Nova\Interfaces\ModelInterface;
 
 abstract class Model implements ModelInterface
@@ -16,6 +17,16 @@ abstract class Model implements ModelInterface
     protected static $table;
 
     /**
+     * @var array
+     */
+    protected $columns = [];
+
+    /**
+     * @var array
+     */
+    protected $accessList = [];
+
+    /**
      * A wrapper for Database::query().
      *
      * @param string $sql       The (PDO)SQL instructions
@@ -25,7 +36,9 @@ abstract class Model implements ModelInterface
      */
     private static function sendPdoQuery($sql, $values = [], $write = false)
     {
-        $dbh = DatabaseWrapper::getConnection()->query($sql, $values);
+        $dbh = DatabaseWrapper::getConnection();
+        $dbh->setCallerClassName(get_called_class());
+        $dbh->query($sql, $values, $write);
         if ($write)
             return $dbh->getRowsCount();
         else
@@ -94,7 +107,7 @@ abstract class Model implements ModelInterface
         try {
             if (is_integer($id)) {
                 $sql = 'SELECT ' . self::setFields($fields) . ' FROM ' . static::$table . ' WHERE id = ?';
-                return static::sendPdoQuery($sql, [$id]);
+                return static::sendPdoQuery($sql, [$id])[0];
             }
             else {
                 throw new ArgumentError();
@@ -118,29 +131,31 @@ abstract class Model implements ModelInterface
 
     /**
      * Insert row.
-     * Example: User::insert(['login' => $login])
+     * Example: $user = new User();
+     *          $user->login = 'user_login';
+     *          $user->create();
      *
      * @param array $hash_values  Inserted values [column => value, ...]
      * @throws ArgumentError
      * @return int
      */
-    public static function insert($hashValues)
+    public function create()
     {
         try {
-            if(is_array($hashValues)){
-                $columns = array_keys($hashValues);
+            if(is_array($this->columns)){
+                $columns = array_keys($this->columns);
                 $values = '';
                 $i = 1;
-                foreach ($hashValues as $key => $value) {
+                foreach ($this->columns as $key => $value) {
                     $values .= ":{$key}";
-                    if($i < count($hashValues))
+                    if($i < count($this->columns))
                         $values .= ', ';
 
                     $i++;
                 }
 
                 $sql = 'INSERT INTO ' . static::$table . '(' . implode(', ', $columns) . ') VALUES (' . $values .')';
-                return static::sendPdoQuery($sql, $hashValues, true);
+                return static::sendPdoQuery($sql, $this->columns, true);
             } else {
                 throw new ArgumentError();
             }
@@ -151,7 +166,11 @@ abstract class Model implements ModelInterface
     }
 
     /**
-     * Update row(s).
+     * Update row.
+     * Example: $user = User::findById(5);
+     *          $user->email = 'newmail@mail.com';
+     *          $user->update();
+     *
      * Example: User::update($id, ['login' => $login])
      *
      * @param string $constraint  SQL Where constraint
@@ -159,22 +178,25 @@ abstract class Model implements ModelInterface
      * @throws ArgumentError
      * @return int
      */
-    public static function update($fields, $hashValues)
+    public function update()
     {
         try {
-            if(is_array($hashValues)){
-                $where = array_keys($fields);
+            if(is_array($this->columns)){
+                $where[] = 'id';
                 $values = '';
-                $i = 1;
-                foreach ($hashValues as $key => $value) {
-                    $values .= "{$key} = :{$key}";
-                    if($i < count($hashValues))
-                        $values .= ', ';
-
+                $i = 0;
+                $this->permitParams();
+                foreach ($this->columns as $key => $value) {
                     $i++;
+                    if ('id' == $key){
+                        continue;
+                    }
+                    $values .= "{$key} = :{$key}";
+                    if($i < count($this->columns))
+                        $values .= ', ';
                 }
 
-                $sql = 'UPDATE ' . static::$table . ' SET ' . $values . 'WHERE ';
+                $sql = 'UPDATE ' . static::$table . ' SET ' . $values . ' WHERE ';
                 foreach ($where as $index => $column) {
                     if($index > 0){
                         $sql .= " AND {$column} = :{$column}";
@@ -183,7 +205,7 @@ abstract class Model implements ModelInterface
                     }
                 }
 
-                return static::sendPdoQuery($sql, array_merge($hashValues, $fields), true);
+                return static::sendPdoQuery($sql, $this->columns, true);
             } else {
                 throw new ArgumentError();
             }
@@ -191,5 +213,72 @@ abstract class Model implements ModelInterface
             $e->printTrace();
         }
 
+    }
+
+    /**
+     * Create or update object
+     * @return int count of inserted/updated rows
+     */
+    public function save()
+    {
+        if (isset($this->id)) {
+            $this->update();
+        } else {
+            $this->create();
+        }
+    }
+
+    /**
+     * Sets permitted parameters
+     * Example: $user = User::findById(1);
+     *          $user->permit(['email']);
+     *          $user->email = 'newmail@inbox.ru';
+     *          $user->login = 'blah';
+     *          $user->update(); //Update only email!
+     *
+     * @param array $accessList
+     */
+    public function permit($accessList = [])
+    {
+        $this->accessList = $accessList;
+    }
+
+    /**
+     * Handle input parameters ($this->columns) by access list ($this->accessList)
+     */
+    private function permitParams()
+    {
+        foreach($this->columns as $key => $value)
+        {
+            if(!in_array($key, $this->accessList)){
+                if ($key != 'id'){
+                    Hash::remove($this->columns, $key);
+                }
+            }
+        }
+    }
+
+    /**
+     * Model table name
+     * @return string
+     */
+    public function getCurrentTable()
+    {
+        return static::$table;
+    }
+
+    public function __set($key, $value)
+    {
+        Hash::set($this->columns, $key, $value);
+    }
+
+    public function __get($key)
+    {
+        return Hash::get($this->columns, $key);
+    }
+
+    public function __isset($key)
+    {
+        return Hash::keyExists($this->columns, $key);
     }
 } 

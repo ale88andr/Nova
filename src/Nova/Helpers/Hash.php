@@ -52,6 +52,17 @@ class Hash
         }
     }
 
+    public static function remove(&$array, $key)
+    {
+        if (self::keyExists($array, $key)){
+            $removedElm = self::get($array, $key);
+            unset($array[$key]);
+            return $removedElm;
+        }
+
+        return null;
+    }
+
     public static function first($array)
     {
         return $array[0];
