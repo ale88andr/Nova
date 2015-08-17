@@ -22,6 +22,11 @@ abstract class Model implements ModelInterface
     protected $columns = [];
 
     /**
+     * @var array
+     */
+    protected $accessList = [];
+
+    /**
      * A wrapper for Database::query().
      *
      * @param string $sql       The (PDO)SQL instructions
@@ -180,6 +185,7 @@ abstract class Model implements ModelInterface
                 $where[] = 'id';
                 $values = '';
                 $i = 0;
+                $this->permitParams();
                 foreach ($this->columns as $key => $value) {
                     $i++;
                     if ('id' == $key){
@@ -219,6 +225,36 @@ abstract class Model implements ModelInterface
             $this->update();
         } else {
             $this->create();
+        }
+    }
+
+    /**
+     * Sets permitted parameters
+     * Example: $user = User::findById(1);
+     *          $user->permit(['email']);
+     *          $user->email = 'newmail@inbox.ru';
+     *          $user->login = 'blah';
+     *          $user->update(); //Update only email!
+     *
+     * @param array $accessList
+     */
+    public function permit($accessList = [])
+    {
+        $this->accessList = $accessList;
+    }
+
+    /**
+     * Handle input parameters ($this->columns) by access list ($this->accessList)
+     */
+    private function permitParams()
+    {
+        foreach($this->columns as $key => $value)
+        {
+            if(!in_array($key, $this->accessList)){
+                if ($key != 'id'){
+                    Hash::remove($this->columns, $key);
+                }
+            }
         }
     }
 
