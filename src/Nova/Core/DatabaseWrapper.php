@@ -9,6 +9,7 @@
 namespace Nova\Core;
 
 use \Nova\Core\Env;
+use \Nova\Core\Exceptions\LogicExceptions\RecordNotFound;
 use \PDO;
 
 class DatabaseWrapper
@@ -114,6 +115,9 @@ class DatabaseWrapper
                 $this->query->execute();
                 if (!$write) {
                     $this->results = $this->query->fetchAll(PDO::FETCH_CLASS, $this->calledClassName);
+                    if (empty($this->results)){
+                        throw new RecordNotFound();
+                    }
                 }
 
                 $this->count = $this->query->rowCount();
@@ -124,6 +128,8 @@ class DatabaseWrapper
                 $this->isError = true;
 //                DEVELOPMENT_ENV ? print_r($e->getMessage())
 //                    : file_put_contents('error.log', $e->getMessage() , FILE_APPEND);
+            } catch (RecordNotFound $e){
+                die($e->printTrace());
             }
         }
 

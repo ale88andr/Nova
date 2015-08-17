@@ -19,8 +19,10 @@ class UsersController extends ApplicationController
 
     public function update()
     {
-        $user = User::findById(5);
-        $user->email = 'ale88andr@gmail.com';
+        $user = User::findById(1);
+        $user->permit(['email']);
+        $user->email = 'ale88andr@inbox.ru';
+        $user->login = 'blah';
 
         $user->update();
     }
