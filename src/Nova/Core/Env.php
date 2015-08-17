@@ -12,10 +12,30 @@ class Env implements AccessInterface {
 
     public function __construct($ymlFile = null)
     {
-        $ymlFile = is_null($ymlFile)
-            ? filter_input(INPUT_SERVER, 'DOCUMENT_ROOT') . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'settings.yml'
-            : $ymlFile;
+        $ymlFile = is_null($ymlFile) ? self::path('config') . 'settings.yml' : $ymlFile;
         $this->yaml = Yaml::parse(file_get_contents($ymlFile));
+    }
+
+    public static function path($resource = null)
+    {
+        $root = filter_input(INPUT_SERVER, 'DOCUMENT_ROOT');
+        switch ($resource) {
+            case 'controller':
+                return implode(DIRECTORY_SEPARATOR, [$root, 'app', 'controllers', '']);
+                break;
+            case 'model':
+                return implode(DIRECTORY_SEPARATOR, [$root, 'app', 'models', '']);
+                break;
+            case 'view':
+                return implode(DIRECTORY_SEPARATOR, [$root, 'app', 'views', '']);
+                break;
+            case 'config':
+                return implode(DIRECTORY_SEPARATOR, [$root, 'config', '']);
+                break;
+            default:
+                return $root . DIRECTORY_SEPARATOR;
+
+        }
     }
 
     public function get($key)
