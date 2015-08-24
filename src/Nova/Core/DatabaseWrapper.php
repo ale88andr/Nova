@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Администратор
- * Date: 14.08.15
- * Time: 12:05
- */
 
 namespace Nova\Core;
 
@@ -32,7 +26,7 @@ class DatabaseWrapper
 
     private function __construct()
     {
-        $dbConnectionFile = filter_input(INPUT_SERVER, 'DOCUMENT_ROOT') . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'database.yml';
+        $dbConnectionFile = Env::path('config') . 'database.yml';
         $this->dbConnectionHash = new Env($dbConnectionFile);
 
         $dsn = $this->getDsn();
@@ -115,9 +109,6 @@ class DatabaseWrapper
                 $this->query->execute();
                 if (!$write) {
                     $this->results = $this->query->fetchAll(PDO::FETCH_CLASS, $this->calledClassName);
-                    if (empty($this->results)){
-                        throw new RecordNotFound();
-                    }
                 }
 
                 $this->count = $this->query->rowCount();
@@ -128,8 +119,6 @@ class DatabaseWrapper
                 $this->isError = true;
 //                DEVELOPMENT_ENV ? print_r($e->getMessage())
 //                    : file_put_contents('error.log', $e->getMessage() , FILE_APPEND);
-            } catch (RecordNotFound $e){
-                die($e->printTrace());
             }
         }
 
