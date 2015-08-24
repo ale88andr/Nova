@@ -1,12 +1,15 @@
 {
-    "name": "tol/nova",
+    "name": "ale88andr/Nova",
+    "description": "Simple php framework",
     "authors": [
         {
             "name": "Alexandr Nekrasov",
             "email": "ale88andr@gmail.com"
         }
     ],
+    "type": "library",
     "require": {
+        "twig/twig": "1.*",
         "symfony/yaml": "~2.7"
     }
 }
