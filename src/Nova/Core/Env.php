@@ -32,10 +32,18 @@ class Env implements AccessInterface {
             case 'config':
                 return implode(DIRECTORY_SEPARATOR, [$root, 'config', '']);
                 break;
+            case 'assets':
+                return implode(DIRECTORY_SEPARATOR, [$root, 'app', 'assets', '']);
+                break;
             default:
                 return $root . DIRECTORY_SEPARATOR;
 
         }
+    }
+
+    public static function url()
+    {
+        return 'http://' . filter_input(INPUT_SERVER, 'HTTP_HOST');
     }
 
     public function get($key)

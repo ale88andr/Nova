@@ -1,3 +1,4 @@
 defaults:
   environment:  'development'
   timezone:     'Europe/Moscow'
+  title:        'NOVA'

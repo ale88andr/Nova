@@ -1,6 +1,8 @@
 <?php
 
 use Nova\Core\Env;
+use Nova\Core\Router;
+use Nova\Core\Exceptions\LogicExceptions\CallActionException;
 use Nova\Helpers\Hash;
 
 class Application {
@@ -13,7 +15,11 @@ class Application {
 
     protected $route;
 
+    protected $routes;
+
     protected $params = [];
+
+    protected $env;
 
     /**
      * Application html layout name
@@ -75,6 +81,7 @@ class Application {
     {
         try {
             $this->beforeLoad();
+            $this->initializeRoutes($this->parseURL());
             $this->initializeController($this->parseURL());
         }
         catch(Exception $e) {
@@ -93,7 +100,11 @@ class Application {
      */
     private function initializeController($url)
     {
-        $this->getController($url);
+        if(is_readable(Env::path() . implode('/', $url))){
+            exit;
+        }
+
+        $this->controller = $this->routes->getControllerName();
 
         try{
             $this->createInstance(Env::path('controller') . $this->controller . '.php');
@@ -122,29 +133,6 @@ class Application {
     }
 
     /**
-     * Set's controller name
-     *
-     * @param array $url Request string (URI)
-     * @return void
-     */
-    private function getController(&$url)
-    {
-        $controller = ucfirst(Hash::extract($url));
-//        $route = $this->routes->get($controller);
-//
-//        if (Hash::keyExists($route, 'resource')) {
-//            $controller = $route['resource'];
-//        }
-//
-//        if(is_null($controller)) {
-//            $route = $this->routes->get('root');
-//            $controller = Hash::get($route, 'resource');
-//        }
-
-        $this->controller = $controller . 'Controller';
-    }
-
-    /**
      * Action handler by request params.
      *
      * @param array $url Part of request URI
@@ -153,39 +141,18 @@ class Application {
      */
     private function initializeAction($url)
     {
-//        try {
-//            $this->pathNames($this->route);
-//            if (Hash::keyExists($this->route, 'only') && !Hash::contains($this->route['only'], $this->action)) {
-//                throw new CallActionException(
-//                    $this->controllerName,
-//                    $this->action,
-//                    $this->route['only']
-//                );
-//            } elseif (method_exists($this->controller, $this->action)) {
-//                $this->params = $url;
-//                ob_start();
-//                call_user_func_array([$this->controller, $this->action], $this->params);
-//                $this->content = ob_get_clean();
-//            } else {
-//                throw new CallActionException(
-//                    get_class($this->controller),
-//                    $this->action
-//                );
-//            }
-//        } catch(CallActionException $e){
-//            ActionController::routingError($e);
-//        }
-        $this->params = $url;
-        call_user_func_array([$this->controllerInstance, $this->action], $this->params);
-    }
+        try {
+            $this->action = $this->routes->getActionName();
 
-    private function pathNames()
-    {
-        if(Hash::keyExists($this->route, 'alias')){
-            $names = array_flip($this->route['alias']);
-            if(Hash::keyExists($names, $this->action)){
-                $this->action = $names[$this->action];
+            if (method_exists($this->controllerInstance, $this->action)) {
+                ob_start();
+                call_user_func_array([$this->controllerInstance, $this->action], $this->routes->getParameters());
+                $this->content = ob_get_clean();
+            } else {
+                throw new CallActionException(get_class($this->controllerInstance), $this->action);
             }
+        } catch(CallActionException $e){
+            die($e->getMessage());
         }
     }
 
@@ -237,13 +204,55 @@ class Application {
         return $url = explode('/', filter_var(trim($_SERVER['REQUEST_URI'], '/') , FILTER_SANITIZE_URL));
     }
 
+    private function initializeRoutes($uri)
+    {
+        $this->routes = new Router($uri);
+    }
+
     private function beforeLoad()
     {
-//        $this->setErrorReporting();
-//        $this->removeMagicQuotes();
-//        $this->setTimeZone();
-//        session_start();
-//        static::$defaultTitle = $this->config->get('title');
+        $this->env = new Env();
+        $this->setErrorReporting();
+        $this->removeMagicQuotes();
+        $this->setTimeZone();
+        session_start();
+        static::$defaultTitle = $this->env->get('title');
+    }
+
+    private function setErrorReporting()
+    {
+        error_reporting(E_ALL);
+        if ($this->env->get('defaults.environment') == 'development') {
+            ini_set('display_errors', 'On');
+        }
+        else {
+            ini_set('display_errors', 'Off');
+            ini_set('log_errors', 'On');
+            ini_set('error_log', implode( DIRECTORY_SEPARATOR, [Env::path(), 'tmp', 'logs', 'error.log']));
+        }
+    }
+
+    private function stripSlashesDeep($value)
+    {
+        $value = is_array($value) ? array_map('stripSlashesDeep', $value) : stripslashes($value);
+        return ($value);
+    }
+
+    private function removeMagicQuotes()
+    {
+        if (get_magic_quotes_gpc()) {
+            $_GET = $this->stripSlashesDeep($_GET);
+            $_POST = $this->stripSlashesDeep($_POST);
+            $_COOKIE = $this->stripSlashesDeep($_COOKIE);
+        }
+    }
+
+    private function setTimeZone()
+    {
+        $timezone = $this->env->get('defaults.timezone');
+        if(is_string($timezone)){
+            date_default_timezone_set($timezone);
+        }
     }
 
     public function title()
