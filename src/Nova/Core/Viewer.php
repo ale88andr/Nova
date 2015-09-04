@@ -12,7 +12,7 @@ class Viewer {
 
     public function __construct()
     {
-        $this->viewsPath = implode(DIRECTORY_SEPARATOR, [$_SERVER['DOCUMENT_ROOT'], 'app', 'views']);
+        $this->viewsPath = implode(DIRECTORY_SEPARATOR, [$_SERVER['DOCUMENT_ROOT'], 'app', 'views', '']);
     }
 
     public function render($partial, $variables = [])

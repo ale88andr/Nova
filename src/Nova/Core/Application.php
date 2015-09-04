@@ -92,6 +92,11 @@ class Application {
         }
     }
 
+    public function __call($name, $value)
+    {
+        throw new Exception('Unknown Controller/Action requested');
+    }
+
     /**
      * Controller handler by request params.
      *
